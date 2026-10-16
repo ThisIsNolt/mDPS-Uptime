@@ -1,4 +1,4 @@
-mDPS Uptime 1.2.0 - Classic Era Melee DPS
+mDPS Uptime 1.2.2 - Classic Era warrior
 
 INSTALL
 Extract the mDPSUptime folder into World of Warcraft\_classic_era_\Interface\AddOns\.
@@ -92,3 +92,15 @@ General Play warning sounds remains the master sound toggle.
 Facing defaults to 0 seconds; other warnings inherit the previous saved delay.
 Delays are independent, and clear on target changes or when the condition ends.
 Beep playback is staggered to avoid overlapping sounds; each repeats every four seconds.
+
+VERSION 1.2.1
+Replaces pure-tone beeps with four short original UI error sounds:
+Error buzz, Access denied, Double buzz, and Descending alert.
+Your per-warning sound selections are preserved. Use Listen on the Alerts tab.
+Restart WoW after replacing the Sounds folder to avoid cached audio.
+
+VERSION 1.2.2
+Adds Beep 5, Beep 6, Beep 7, Beep 8, Sound 1, Sound 2, and Sound 3
+as options for all four warnings. Original sounds and saved selections remain.
+Sound playback spacing now accounts for the selected recording duration.
+Restart WoW after replacing the complete addon folder including Sounds.

@@ -82,15 +82,18 @@ local function InitializeAlerts(reset)
         end
         db.alertDelays[key] = math.max(0, math.min(3, db.alertDelays[key]))
         if type(db.alertSounds[key]) ~= "number" or db.alertSounds[key] < 0
-            or db.alertSounds[key] > 4 or db.alertSounds[key] % 1 ~= 0 then
+            or db.alertSounds[key] > #mDPSUptimeSounds or db.alertSounds[key] % 1 ~= 0 then
             db.alertSounds[key] = index
         end
     end
 end
 function mDPSUptimePlayBeep(choice)
-    if choice and choice >= 1 and choice <= 4 then
-        PlaySoundFile("Interface\\AddOns\\mDPSUptime\\Sounds\\beep" .. choice .. ".wav", "Master")
+    local sound = mDPSUptimeSounds[choice]
+    if sound then
+        PlaySoundFile("Interface\\AddOns\\mDPSUptime\\Sounds\\" .. sound.file, "Master")
+        return sound.duration
     end
+    return 0
 end
 local function ClearAlertTimers()
     activeSince, soundTimes = {}, {}
@@ -140,8 +143,8 @@ local function UpdateWarnings()
     end
     text:SetText(table.concat(lines, "\n"))
     if beepKey then
-        mDPSUptimePlayBeep(db.alertSounds[beepKey])
-        soundTimes[beepKey], nextSoundAt = now, now + 0.65
+        local duration = mDPSUptimePlayBeep(db.alertSounds[beepKey])
+        soundTimes[beepKey], nextSoundAt = now, now + math.max(0.65, duration + 0.1)
     end
 end
 

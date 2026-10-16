@@ -1,3 +1,17 @@
+mDPSUptimeSounds = {
+    {name = "Error buzz", file = "beep1.wav", duration = 0.2400},
+    {name = "Access denied", file = "beep2.wav", duration = 0.3250},
+    {name = "Double buzz", file = "beep3.wav", duration = 0.3350},
+    {name = "Descending alert", file = "beep4.wav", duration = 0.3300},
+    {name = "Beep 5", file = "beep5.wav", duration = 0.5000},
+    {name = "Beep 6", file = "beep6.wav", duration = 0.5000},
+    {name = "Beep 7", file = "beep7.wav", duration = 0.5000},
+    {name = "Beep 8", file = "beep8.wav", duration = 0.5000},
+    {name = "Sound 1", file = "sound1.wav", duration = 0.7000},
+    {name = "Sound 2", file = "sound2.wav", duration = 0.8000},
+    {name = "Sound 3", file = "sound3.wav", duration = 0.7000},
+}
+
 mDPSUptimeOptions = {}
 local options = mDPSUptimeOptions
 local db, panel, refreshWarnings
@@ -158,9 +172,10 @@ function options.Open()
         Heading(general, "Display", 0, -360, 700)
         Label(general, "Use Preview below to test the warnings. Move text unlocks the display;\nwhen finished, type /mdps lock. Change text size with /mdps size 36.", 2, -393, 690)
 
-        Heading(alerts, "Warning delays and beep sounds", 0, 0, 700)
-        Label(alerts, "Each delay runs independently. Zero means immediate.\nEnable Play warning sounds on General for combat beeps; Listen always previews.", 2, -31, 690)
-        local soundNames = {[0] = "Silent", "Low beep", "High beep", "Double beep", "Triple beep"}
+        Heading(alerts, "Warning delays and error sounds", 0, 0, 700)
+        Label(alerts, "Each delay runs independently. Zero means immediate.\nEnable Play warning sounds on General for combat alerts; Listen always previews.", 2, -31, 690)
+        local soundNames = {[0] = "Silent"}
+        for index, sound in ipairs(mDPSUptimeSounds) do soundNames[index] = sound.name end
         for index, entry in ipairs({{"attack", "Not auto attacking"}, {"range", "Too far away"},
             {"facing", "Facing the wrong way"}, {"target", "No target"}}) do
             local key, title = entry[1], entry[2]
@@ -182,13 +197,13 @@ function options.Open()
                 soundButton:SetText(soundNames[db.alertSounds[key]])
             end
             soundButton = Button(alerts, "", 462, y - 20, 142, function()
-                db.alertSounds[key] = (db.alertSounds[key] + 1) % 5
+                db.alertSounds[key] = (db.alertSounds[key] + 1) % (#mDPSUptimeSounds + 1)
                 UpdateRow()
             end)
             soundButton:SetScript("OnEnter", function(self)
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                GameTooltip:SetText("Click to choose the next beep")
-                GameTooltip:AddLine("Silent, low, high, double, or triple beep.", 1, 1, 1, true)
+                GameTooltip:SetText("Click to choose the next alert sound")
+                GameTooltip:AddLine("11 sounds plus Silent. Includes Beeps 5-8 and Sounds 1-3. Use Listen to preview.", 1, 1, 1, true)
                 GameTooltip:Show()
             end)
             soundButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -203,7 +218,7 @@ function options.Open()
             end)
             alertRefresh[#alertRefresh + 1] = UpdateRow
         end
-        Label(alerts, "Click a sound name to cycle choices. Active warnings repeat their beep every 4 seconds.\nFacing delay defaults to 0.0 seconds. The game must report a facing error first.", 2, -448, 700)
+        Label(alerts, "Click a sound name to cycle choices. Active warnings repeat their sound every 4 seconds.\nFacing delay defaults to 0.0 seconds. The game must report a facing error first.", 2, -448, 700)
 
         local function Preset(mode)
             for id in pairs(known) do db.instances[id] = mode == "all" end
@@ -238,7 +253,7 @@ function options.Open()
         divider:SetColorTexture(1, 1, 1, 0.12)
         divider:SetPoint("BOTTOMLEFT", 24, 56)
         divider:SetSize(712, 1)
-        Label(panel, "mDPS Uptime 1.2.0", 26, -612, 250)
+        Label(panel, "mDPS Uptime 1.2.2", 26, -612, 250)
         Button(panel, "Preview", 414, -605, 100, function() SlashCmdList.MDPSUPTIME("test") end)
         Button(panel, "Move text", 522, -605, 100, function()
             panel:Hide()
