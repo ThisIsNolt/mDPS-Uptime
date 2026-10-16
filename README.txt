@@ -58,7 +58,7 @@ This first version has not been tested inside WoW. Facing uses the game's error
 event, not a continuous direction query. It clears after a melee swing result or
 direct damage on the same target, a target change, leaving combat, or 2.5 seconds.
 It can briefly linger after turning correctly until an attack confirms it.
-Range uses an actual warrior melee ability, not a generic distance estimate.
+Range uses an actual melee dps ability, not a generic distance estimate.
 Unknown range produces no warning. Auto attack on does not prove swings landed;
 stuns, disarms, immunity, line of sight and encounter mechanics are not tracked.
 
