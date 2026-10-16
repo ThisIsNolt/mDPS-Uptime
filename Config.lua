@@ -10,7 +10,26 @@ mDPSUptimeSounds = {
     {name = "Sound 1", file = "sound1.wav", duration = 0.7000},
     {name = "Sound 2", file = "sound2.wav", duration = 0.8000},
     {name = "Sound 3", file = "sound3.wav", duration = 0.7000},
+    {name = "No target", file = "no_target.wav", duration = 1.9200, warning = "target"},
+    {name = "Not attacking", file = "not_attacking.wav", duration = 1.9200, warning = "attack"},
+    {name = "Too far away", file = "too_far_away.wav", duration = 1.9440, warning = "range"},
+    {name = "Too far buddy", file = "too_far_buddy.wav", duration = 2.0800, warning = "range"},
+    {name = "Wrong way stupid", file = "wrong_way_stupid.wav", duration = 2.3200, warning = "facing"},
+    {name = "Wrong way", file = "wrong_way.wav", duration = 1.8720, warning = "facing"},
 }
+
+function mDPSUptimeSoundAllowed(choice, key)
+    if choice == 0 then return true end
+    local sound = mDPSUptimeSounds[choice]
+    return sound ~= nil and (sound.warning == nil or sound.warning == key)
+end
+function mDPSUptimeSoundChoices(key)
+    local choices = {0}
+    for index in ipairs(mDPSUptimeSounds) do
+        if mDPSUptimeSoundAllowed(index, key) then choices[#choices + 1] = index end
+    end
+    return choices
+end
 
 mDPSUptimeOptions = {}
 local options = mDPSUptimeOptions
@@ -179,6 +198,7 @@ function options.Open()
         for index, entry in ipairs({{"attack", "Not auto attacking"}, {"range", "Too far away"},
             {"facing", "Facing the wrong way"}, {"target", "No target"}}) do
             local key, title = entry[1], entry[2]
+            local choices = mDPSUptimeSoundChoices(key)
             local y = -91 - (index - 1) * 89
             Label(alerts, title, 2, y, 290, "GameFontNormal")
             local valueText = Label(alerts, "", 2, y - 25, 190)
@@ -197,13 +217,17 @@ function options.Open()
                 soundButton:SetText(soundNames[db.alertSounds[key]])
             end
             soundButton = Button(alerts, "", 462, y - 20, 142, function()
-                db.alertSounds[key] = (db.alertSounds[key] + 1) % (#mDPSUptimeSounds + 1)
+                local current = 1
+                for i, choice in ipairs(choices) do
+                    if choice == db.alertSounds[key] then current = i; break end
+                end
+                db.alertSounds[key] = choices[current % #choices + 1]
                 UpdateRow()
             end)
             soundButton:SetScript("OnEnter", function(self)
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                 GameTooltip:SetText("Click to choose the next alert sound")
-                GameTooltip:AddLine("11 sounds plus Silent. Includes Beeps 5-8 and Sounds 1-3. Use Listen to preview.", 1, 1, 1, true)
+                GameTooltip:AddLine("Shared sounds plus voice lines for this warning only. Click to cycle; use Listen to preview.", 1, 1, 1, true)
                 GameTooltip:Show()
             end)
             soundButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -253,7 +277,7 @@ function options.Open()
         divider:SetColorTexture(1, 1, 1, 0.12)
         divider:SetPoint("BOTTOMLEFT", 24, 56)
         divider:SetSize(712, 1)
-        Label(panel, "mDPS Uptime 1.2.2", 26, -612, 250)
+        Label(panel, "mDPS Uptime 1.2.3", 26, -612, 250)
         Button(panel, "Preview", 414, -605, 100, function() SlashCmdList.MDPSUPTIME("test") end)
         Button(panel, "Move text", 522, -605, 100, function()
             panel:Hide()

@@ -2,7 +2,7 @@
 ## Title: mDPS Uptime
 ## Notes: Warrior auto attack, melee range, and facing reminders for Classic Era.
 ## Author: Nolt
-## Version: 1.2.2
+## Version: 1.2.3
 ## SavedVariables: NoltUptimeDB
 Config.lua
 mDPSUptime.lua

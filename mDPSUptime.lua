@@ -82,7 +82,8 @@ local function InitializeAlerts(reset)
         end
         db.alertDelays[key] = math.max(0, math.min(3, db.alertDelays[key]))
         if type(db.alertSounds[key]) ~= "number" or db.alertSounds[key] < 0
-            or db.alertSounds[key] > #mDPSUptimeSounds or db.alertSounds[key] % 1 ~= 0 then
+            or db.alertSounds[key] > #mDPSUptimeSounds or db.alertSounds[key] % 1 ~= 0
+            or not mDPSUptimeSoundAllowed(db.alertSounds[key], key) then
             db.alertSounds[key] = index
         end
     end

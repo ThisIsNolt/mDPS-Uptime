@@ -1,4 +1,4 @@
-mDPS Uptime 1.2.2 - Classic Era warrior
+mDPS Uptime 1.2.3 - Classic Era warrior
 
 INSTALL
 Extract the mDPSUptime folder into World of Warcraft\_classic_era_\Interface\AddOns\.
@@ -103,4 +103,12 @@ VERSION 1.2.2
 Adds Beep 5, Beep 6, Beep 7, Beep 8, Sound 1, Sound 2, and Sound 3
 as options for all four warnings. Original sounds and saved selections remain.
 Sound playback spacing now accounts for the selected recording duration.
+Restart WoW after replacing the complete addon folder including Sounds.
+
+VERSION 1.2.3
+Adds warning-specific spoken alerts.
+No target: No target. Auto attack: Not attacking.
+Range: Too far away / Too far buddy. Facing: Wrong way / Wrong way stupid.
+Voice choices only appear for their matching warning; shared sounds remain available.
+Existing sound selections are preserved. Choose a voice in /mdps config > Alerts.
 Restart WoW after replacing the complete addon folder including Sounds.
