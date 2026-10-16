@@ -1,4 +1,4 @@
-mDPS Uptime 1.2.3 - Classic Era warrior
+mDPS Uptime 1.2.4 - Classic Era warrior
 
 INSTALL
 Extract the mDPSUptime folder into World of Warcraft\_classic_era_\Interface\AddOns\.
@@ -112,3 +112,10 @@ Range: Too far away / Too far buddy. Facing: Wrong way / Wrong way stupid.
 Voice choices only appear for their matching warning; shared sounds remain available.
 Existing sound selections are preserved. Choose a voice in /mdps config > Alerts.
 Restart WoW after replacing the complete addon folder including Sounds.
+
+VERSION 1.2.4
+Alerts tab: checkbox beside each warning enables or disables its large text and sound.
+All warnings start enabled; existing disabled No Target preference is preserved.
+Native error suppression remains controlled separately under General.
+No Target toggle moved from General to Alerts; /mdps target still works.
+Display previews and Listen buttons remain available even for disabled warnings.

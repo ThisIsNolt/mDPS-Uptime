@@ -177,8 +177,7 @@ function options.Open()
             "Master switch for combat warnings and native error suppression.")
         Setting(general, "sound", "Play warning sounds", 0, -64, 650,
             "Play a sound when an addon warning is displayed, at most once every four seconds.")
-        Setting(general, "noTarget", "Warn when no target is selected", 0, -96, 650,
-            "Show NO TARGET while in combat without a selected target.")
+        Label(general, "Enable individual warnings on the Alerts tab.", 2, -105, 690)
 
         Heading(general, "Hide built-in error text", 0, -164, 700)
         Label(general, "Keep the large addon warnings while hiding duplicate client text.", 2, -195, 690)
@@ -192,7 +191,7 @@ function options.Open()
         Label(general, "Use Preview below to test the warnings. Move text unlocks the display;\nwhen finished, type /mdps lock. Change text size with /mdps size 36.", 2, -393, 690)
 
         Heading(alerts, "Warning delays and error sounds", 0, 0, 700)
-        Label(alerts, "Each delay runs independently. Zero means immediate.\nEnable Play warning sounds on General for combat alerts; Listen always previews.", 2, -31, 690)
+        Label(alerts, "Check a warning to enable its text and sound. Zero delay means immediate.\nEnable Play warning sounds on General for combat alerts; Listen always previews.", 2, -31, 690)
         local soundNames = {[0] = "Silent"}
         for index, sound in ipairs(mDPSUptimeSounds) do soundNames[index] = sound.name end
         for index, entry in ipairs({{"attack", "Not auto attacking"}, {"range", "Too far away"},
@@ -200,7 +199,13 @@ function options.Open()
             local key, title = entry[1], entry[2]
             local choices = mDPSUptimeSoundChoices(key)
             local y = -91 - (index - 1) * 89
-            Label(alerts, title, 2, y, 290, "GameFontNormal")
+            Checkbox(alerts, title, 0, y + 3, 400,
+                function() return db.alertEnabled[key] end,
+                function(value)
+                    db.alertEnabled[key] = value
+                    if key == "target" then db.noTarget = value end
+                end,
+                "Enable this warning's large text and combat sound. Native error suppression is configured separately on General.")
             local valueText = Label(alerts, "", 2, y - 25, 190)
             local slider = CreateFrame("Slider", nil, alerts, "OptionsSliderTemplate")
             slider:SetPoint("TOPLEFT", 192, y - 25)
@@ -277,7 +282,7 @@ function options.Open()
         divider:SetColorTexture(1, 1, 1, 0.12)
         divider:SetPoint("BOTTOMLEFT", 24, 56)
         divider:SetSize(712, 1)
-        Label(panel, "mDPS Uptime 1.2.3", 26, -612, 250)
+        Label(panel, "mDPS Uptime 1.2.4", 26, -612, 250)
         Button(panel, "Preview", 414, -605, 100, function() SlashCmdList.MDPSUPTIME("test") end)
         Button(panel, "Move text", 522, -605, 100, function()
             panel:Hide()

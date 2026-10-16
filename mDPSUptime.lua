@@ -74,9 +74,13 @@ local warningText = {
     target = "|cffffcc00NO TARGET|r",
 }
 local function InitializeAlerts(reset)
+    if reset or type(db.alertEnabled) ~= "table" then db.alertEnabled = {} end
     if reset or type(db.alertDelays) ~= "table" then db.alertDelays = {} end
     if reset or type(db.alertSounds) ~= "table" then db.alertSounds = {} end
     for index, key in ipairs({"attack", "range", "facing", "target"}) do
+        if type(db.alertEnabled[key]) ~= "boolean" then
+            db.alertEnabled[key] = key ~= "target" or db.noTarget
+        end
         if type(db.alertDelays[key]) ~= "number" then
             db.alertDelays[key] = key == "facing" and 0 or db.delay
         end
@@ -126,7 +130,7 @@ local function UpdateWarnings()
     local lines = {}
     local beepKey
     for _, key in ipairs(warningOrder) do
-        if active[key] then
+        if active[key] and db.alertEnabled[key] then
             activeSince[key] = activeSince[key] or now
             if now - activeSince[key] >= db.alertDelays[key] then
                 lines[#lines + 1] = warningText[key]
@@ -271,6 +275,7 @@ SlashCmdList.MDPSUPTIME = function(input)
         Print("Sound " .. (db.sound and "on." or "off."))
     elseif cmd == "target" then
         db.noTarget = not db.noTarget
+        db.alertEnabled.target = db.noTarget
         Print("No target warning " .. (db.noTarget and "on." or "off."))
     elseif cmd == "on" or cmd == "off" then
         db.enabled = cmd == "on"
