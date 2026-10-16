@@ -1,4 +1,4 @@
-mDPS Uptime v1.1.8 - Classic Era Melee DPS
+mDPS Uptime 1.2.0 - Classic Era Melee DPS
 
 INSTALL
 Extract the mDPSUptime folder into World of Warcraft\_classic_era_\Interface\AddOns\.
@@ -58,7 +58,7 @@ This first version has not been tested inside WoW. Facing uses the game's error
 event, not a continuous direction query. It clears after a melee swing result or
 direct damage on the same target, a target change, leaving combat, or 2.5 seconds.
 It can briefly linger after turning correctly until an attack confirms it.
-Range uses an actual melee dps ability, not a generic distance estimate.
+Range uses an actual warrior melee ability, not a generic distance estimate.
 Unknown range produces no warning. Auto attack on does not prove swings landed;
 stuns, disarms, immunity, line of sight and encounter mechanics are not tracked.
 
@@ -84,3 +84,11 @@ VERSION 1.1.8
 Settings reorganized into General and Locations pages.
 Two-column location selection, tooltips, and Preview / Move text / Done controls.
 Combat and native error suppression behavior is unchanged.
+
+VERSION 1.2.0
+Alerts tab: independent 0-3 second delay sliders for all four warnings.
+Four bundled custom beep sounds plus Silent, selectable per warning with Listen preview.
+General Play warning sounds remains the master sound toggle.
+Facing defaults to 0 seconds; other warnings inherit the previous saved delay.
+Delays are independent, and clear on target changes or when the condition ends.
+Beep playback is staggered to avoid overlapping sounds; each repeats every four seconds.

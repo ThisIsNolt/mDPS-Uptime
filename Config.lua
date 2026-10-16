@@ -2,6 +2,7 @@ mDPSUptimeOptions = {}
 local options = mDPSUptimeOptions
 local db, panel, refreshWarnings
 local checks = {}
+local alertRefresh = {}
 local raids = {
     {409, "Molten Core"}, {249, "Onyxia's Lair"}, {469, "Blackwing Lair"},
     {309, "Zul'Gurub"}, {509, "Ruins of Ahn'Qiraj (AQ20)"},
@@ -42,6 +43,7 @@ end
 
 local function Refresh()
     for _, check in ipairs(checks) do check:SetChecked(check.read()) end
+    for _, update in ipairs(alertRefresh) do update() end
     refreshWarnings()
 end
 
@@ -121,15 +123,20 @@ function options.Open()
         general:SetSize(712, 470)
         local locations = CreateFrame("Frame", nil, panel)
         locations:SetAllPoints(general)
-        local generalTab, locationsTab
+        local alerts = CreateFrame("Frame", nil, panel)
+        alerts:SetAllPoints(general)
+        local generalTab, locationsTab, alertsTab
         local function SelectPage(which)
             general:SetShown(which == "general")
             locations:SetShown(which == "locations")
+            alerts:SetShown(which == "alerts")
             generalTab:SetEnabled(which ~= "general")
             locationsTab:SetEnabled(which ~= "locations")
+            alertsTab:SetEnabled(which ~= "alerts")
         end
         generalTab = Button(panel, "General", 24, -40, 130, function() SelectPage("general") end)
         locationsTab = Button(panel, "Locations", 162, -40, 130, function() SelectPage("locations") end)
+        alertsTab = Button(panel, "Alerts", 300, -40, 130, function() SelectPage("alerts") end)
         Label(panel, "Changes save immediately. Hover over an option for details.", 26, -80, 700)
 
         Heading(general, "Combat warnings", 0, 0, 700)
@@ -150,6 +157,53 @@ function options.Open()
 
         Heading(general, "Display", 0, -360, 700)
         Label(general, "Use Preview below to test the warnings. Move text unlocks the display;\nwhen finished, type /mdps lock. Change text size with /mdps size 36.", 2, -393, 690)
+
+        Heading(alerts, "Warning delays and beep sounds", 0, 0, 700)
+        Label(alerts, "Each delay runs independently. Zero means immediate.\nEnable Play warning sounds on General for combat beeps; Listen always previews.", 2, -31, 690)
+        local soundNames = {[0] = "Silent", "Low beep", "High beep", "Double beep", "Triple beep"}
+        for index, entry in ipairs({{"attack", "Not auto attacking"}, {"range", "Too far away"},
+            {"facing", "Facing the wrong way"}, {"target", "No target"}}) do
+            local key, title = entry[1], entry[2]
+            local y = -91 - (index - 1) * 89
+            Label(alerts, title, 2, y, 290, "GameFontNormal")
+            local valueText = Label(alerts, "", 2, y - 25, 190)
+            local slider = CreateFrame("Slider", nil, alerts, "OptionsSliderTemplate")
+            slider:SetPoint("TOPLEFT", 192, y - 25)
+            slider:SetSize(240, 18)
+            slider:SetMinMaxValues(0, 3)
+            slider:SetValueStep(0.1)
+            slider:SetObeyStepOnDrag(true)
+            if slider.Low then slider.Low:SetText("0 s") end
+            if slider.High then slider.High:SetText("3 s") end
+            local soundButton
+            local function UpdateRow()
+                slider:SetValue(db.alertDelays[key])
+                valueText:SetText(string.format("Delay: %.1f seconds", db.alertDelays[key]))
+                soundButton:SetText(soundNames[db.alertSounds[key]])
+            end
+            soundButton = Button(alerts, "", 462, y - 20, 142, function()
+                db.alertSounds[key] = (db.alertSounds[key] + 1) % 5
+                UpdateRow()
+            end)
+            soundButton:SetScript("OnEnter", function(self)
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                GameTooltip:SetText("Click to choose the next beep")
+                GameTooltip:AddLine("Silent, low, high, double, or triple beep.", 1, 1, 1, true)
+                GameTooltip:Show()
+            end)
+            soundButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
+            Button(alerts, "Listen", 612, y - 20, 88, function() mDPSUptimePlayBeep(db.alertSounds[key]) end)
+            slider:SetScript("OnValueChanged", function(self, value)
+                local rounded = math.floor(value * 10 + 0.5) / 10
+                if db.alertDelays[key] ~= rounded then
+                    db.alertDelays[key] = rounded
+                    refreshWarnings()
+                end
+                valueText:SetText(string.format("Delay: %.1f seconds", rounded))
+            end)
+            alertRefresh[#alertRefresh + 1] = UpdateRow
+        end
+        Label(alerts, "Click a sound name to cycle choices. Active warnings repeat their beep every 4 seconds.\nFacing delay defaults to 0.0 seconds. The game must report a facing error first.", 2, -448, 700)
 
         local function Preset(mode)
             for id in pairs(known) do db.instances[id] = mode == "all" end
@@ -184,7 +238,7 @@ function options.Open()
         divider:SetColorTexture(1, 1, 1, 0.12)
         divider:SetPoint("BOTTOMLEFT", 24, 56)
         divider:SetSize(712, 1)
-        Label(panel, "mDPS Uptime 1.1.8", 26, -612, 250)
+        Label(panel, "mDPS Uptime 1.2.0", 26, -612, 250)
         Button(panel, "Preview", 414, -605, 100, function() SlashCmdList.MDPSUPTIME("test") end)
         Button(panel, "Move text", 522, -605, 100, function()
             panel:Hide()

@@ -3,6 +3,8 @@ local defaults = { x = 0, y = 110, size = 36, delay = 0.6, sound = false, enable
 local db, playerGUID, rangeSpell
 local elapsed, pending, pendingSince, lastSound = 0, "", 0, 0
 local facingUntil, facingGUID, testUntil = 0, nil, 0
+local activeSince, soundTimes = {}, {}
+local nextSoundAt = 0
 local unlocked = false
 local locationAllowed = true
 
@@ -64,29 +66,36 @@ local function ValidTarget()
         and not UnitIsDeadOrGhost("target")
 end
 
-local function Warning(now)
-    if not db.enabled or not locationAllowed or UnitIsDeadOrGhost("player") or not UnitAffectingCombat("player") then
-        facingUntil, facingGUID = 0, nil
-        return ""
-    end
-    if not UnitExists("target") then
-        return db.noTarget and "|cffffcc00NO TARGET|r" or ""
-    end
-    if not ValidTarget() then return "" end
-    local lines = {}
-    if not IsCurrentSpell(6603) then
-        lines[#lines + 1] = "|cffff4444NOT AUTO ATTACKING|r"
-    end
-    if rangeSpell then
-        local inRange = IsSpellInRange(rangeSpell, BOOKTYPE_SPELL, "target")
-        -- Unknown range is not evidence that the target is out of range.
-        if inRange == 0 then
-            lines[#lines + 1] = "|cffff4444TOO FAR AWAY|r"
+local warningOrder = {"facing", "attack", "range", "target"}
+local warningText = {
+    attack = "|cffff4444NOT AUTO ATTACKING|r",
+    range = "|cffff4444TOO FAR AWAY|r",
+    facing = "|cffffaa00FACING THE WRONG WAY|r",
+    target = "|cffffcc00NO TARGET|r",
+}
+local function InitializeAlerts(reset)
+    if reset or type(db.alertDelays) ~= "table" then db.alertDelays = {} end
+    if reset or type(db.alertSounds) ~= "table" then db.alertSounds = {} end
+    for index, key in ipairs({"attack", "range", "facing", "target"}) do
+        if type(db.alertDelays[key]) ~= "number" then
+            db.alertDelays[key] = key == "facing" and 0 or db.delay
+        end
+        db.alertDelays[key] = math.max(0, math.min(3, db.alertDelays[key]))
+        if type(db.alertSounds[key]) ~= "number" or db.alertSounds[key] < 0
+            or db.alertSounds[key] > 4 or db.alertSounds[key] % 1 ~= 0 then
+            db.alertSounds[key] = index
         end
     end
-    return table.concat(lines, "\n")
 end
-
+function mDPSUptimePlayBeep(choice)
+    if choice and choice >= 1 and choice <= 4 then
+        PlaySoundFile("Interface\\AddOns\\mDPSUptime\\Sounds\\beep" .. choice .. ".wav", "Master")
+    end
+end
+local function ClearAlertTimers()
+    activeSince, soundTimes = {}, {}
+    nextSoundAt = 0
+end
 local function UpdateWarnings()
     if not db then return end
     local now = GetTime()
@@ -95,28 +104,44 @@ local function UpdateWarnings()
         return
     end
     if now < testUntil then
-        text:SetText("|cffff4444NOT AUTO ATTACKING|r\n|cffff4444TOO FAR AWAY|r\n|cffffaa00FACING THE WRONG WAY|r")
+        text:SetText(warningText.attack .. "\n" .. warningText.range .. "\n" .. warningText.facing)
         return
     end
-    local message = Warning(now)
-    if message ~= pending then
-        pending, pendingSince = message, now
-    end
-    local shown = ""
-    if message == "" or now - pendingSince < db.delay then
-        shown = ""
+    local active = {}
+    if db.enabled and locationAllowed and not UnitIsDeadOrGhost("player") and UnitAffectingCombat("player") then
+        if not UnitExists("target") then
+            active.target = db.noTarget
+        elseif ValidTarget() then
+            active.attack = not IsCurrentSpell(6603)
+            active.range = rangeSpell and IsSpellInRange(rangeSpell, BOOKTYPE_SPELL, "target") == 0
+            active.facing = now < facingUntil and facingGUID == UnitGUID("target")
+        end
     else
-        shown = message
+        facingUntil, facingGUID = 0, nil
     end
-    -- Facing is event driven and bypasses the delay for other warnings.
-    if now < facingUntil and facingGUID == UnitGUID("target") and ValidTarget() then
-        if shown ~= "" then shown = shown .. "\n" end
-        shown = shown .. "|cffffaa00FACING THE WRONG WAY|r"
+    local lines = {}
+    local beepKey
+    for _, key in ipairs(warningOrder) do
+        if active[key] then
+            activeSince[key] = activeSince[key] or now
+            if now - activeSince[key] >= db.alertDelays[key] then
+                lines[#lines + 1] = warningText[key]
+                if db.sound and db.alertSounds[key] > 0 and now >= nextSoundAt
+                    and (not soundTimes[key] or now - soundTimes[key] >= 4) then
+                    -- Oldest waiting warning gets the next sound slot.
+                    if not beepKey or (soundTimes[key] or -math.huge) < (soundTimes[beepKey] or -math.huge) then
+                        beepKey = key
+                    end
+                end
+            end
+        else
+            activeSince[key], soundTimes[key] = nil, nil
+        end
     end
-    text:SetText(shown)
-    if shown ~= "" and db.sound and now - lastSound >= 4 then
-        PlaySound(8959, "Master")
-        lastSound = now
+    text:SetText(table.concat(lines, "\n"))
+    if beepKey then
+        mDPSUptimePlayBeep(db.alertSounds[beepKey])
+        soundTimes[beepKey], nextSoundAt = now, now + 0.65
     end
 end
 
@@ -137,7 +162,9 @@ addon:SetScript("OnEvent", function(_, event, ...)
         end
         db.size = math.max(16, math.min(72, db.size))
         db.delay = math.max(0, math.min(3, db.delay))
+        InitializeAlerts()
         mDPSUptimeOptions.Initialize(db, function()
+            ClearAlertTimers()
             locationAllowed = mDPSUptimeOptions.LocationAllowed()
             pending, pendingSince, facingUntil, facingGUID = "", GetTime(), 0, nil
             if not unlocked and GetTime() >= testUntil then text:SetText("") end
@@ -180,9 +207,11 @@ addon:SetScript("OnEvent", function(_, event, ...)
     elseif event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
         FindRangeSpell()
         if db then locationAllowed = mDPSUptimeOptions.LocationAllowed() end
+        ClearAlertTimers()
         pending, pendingSince, facingUntil, facingGUID = "", GetTime(), 0, nil
         if not unlocked and GetTime() >= testUntil then text:SetText("") end
     elseif event == "PLAYER_TARGET_CHANGED" or event == "PLAYER_REGEN_ENABLED" then
+        ClearAlertTimers()
         facingUntil, facingGUID, pending = 0, nil, ""
         pendingSince = GetTime()
         if db and not unlocked and GetTime() >= testUntil then text:SetText("") end
@@ -190,7 +219,7 @@ addon:SetScript("OnEvent", function(_, event, ...)
         local _, message = ...
         if db and db.enabled and locationAllowed and message == ERR_BADATTACKFACING
             and UnitAffectingCombat("player") and ValidTarget() then
-            facingUntil, facingGUID = GetTime() + 2.5, UnitGUID("target")
+            facingUntil, facingGUID = GetTime() + math.max(2.5, db.alertDelays.facing + 1.5), UnitGUID("target")
             UpdateWarnings()
         end
     elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
@@ -230,7 +259,9 @@ SlashCmdList.MDPSUPTIME = function(input)
         Apply(); testUntil = GetTime() + 10
     elseif cmd == "delay" and tonumber(value) then
         db.delay = math.max(0, math.min(3, tonumber(value)))
-        Print("Warning delay: " .. db.delay .. " seconds.")
+        for _, key in ipairs({"attack", "range", "target"}) do db.alertDelays[key] = db.delay end
+        ClearAlertTimers()
+        Print("Attack, range, and no target delays: " .. db.delay .. " seconds. Facing uses its own slider.")
     elseif cmd == "sound" then
         db.sound = not db.sound
         Print("Sound " .. (db.sound and "on." or "off."))
@@ -242,6 +273,8 @@ SlashCmdList.MDPSUPTIME = function(input)
         Print(db.enabled and "Enabled." or "Disabled.")
     elseif cmd == "reset" then
         for key, value in pairs(defaults) do db[key] = value end
+        InitializeAlerts(true)
+        ClearAlertTimers()
         mDPSUptimeOptions.Reset()
         Apply(); Print("Settings reset.")
     else
