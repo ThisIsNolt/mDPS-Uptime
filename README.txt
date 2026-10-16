@@ -1,4 +1,4 @@
-mDPS Uptime 1.1.8 - Classic Era Melee DPS
+mDPS Uptime v1.1.8 - Classic Era Melee DPS
 
 INSTALL
 Extract the mDPSUptime folder into World of Warcraft\_classic_era_\Interface\AddOns\.
