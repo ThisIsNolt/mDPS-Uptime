@@ -1,4 +1,4 @@
-mDPS Uptime 1.2.4 - Classic Era warrior
+mDPS Uptime 1.2.5 - Classic Era warrior
 
 INSTALL
 Extract the mDPSUptime folder into World of Warcraft\_classic_era_\Interface\AddOns\.
@@ -119,3 +119,10 @@ All warnings start enabled; existing disabled No Target preference is preserved.
 Native error suppression remains controlled separately under General.
 No Target toggle moved from General to Alerts; /mdps target still works.
 Display previews and Listen buttons remain available even for disabled warnings.
+
+VERSION 1.2.5
+Custom logo used for addon list icon and minimap button.
+Left-click minimap button: settings. Right-click: preview warnings.
+Drag around the minimap to move; position saves automatically.
+General > Show minimap button or /mdps minimap toggles visibility.
+Restart WoW after adding this update so the new icon is loaded.

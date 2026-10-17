@@ -1,9 +1,11 @@
 ## Interface: 11509
 ## Title: mDPS Uptime
-## Notes: Warrior auto attack, melee range, and facing reminders for Classic Era.
+## IconTexture: Interface\AddOns\mDPSUptime\Media\Icon.tga
+## Notes: Melee auto attack, melee range, and facing reminders for Classic Era.
 ## Author: Nolt
-## Version: 1.2.4
+## Version: 1.2.5
 ## SavedVariables: NoltUptimeDB
 Config.lua
+Minimap.lua
 mDPSUptime.lua
 

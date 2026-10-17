@@ -1,5 +1,5 @@
 local addon = CreateFrame("Frame")
-local defaults = { x = 0, y = 110, size = 36, delay = 0.6, sound = false, enabled = true, noTarget = true, suppressFacing = true, suppressRange = true }
+local defaults = { x = 0, y = 110, size = 36, delay = 0.6, sound = false, enabled = true, noTarget = true, suppressFacing = true, suppressRange = true, showMinimap = true, minimapAngle = 225 }
 local db, playerGUID, rangeSpell
 local elapsed, pending, pendingSince, lastSound = 0, "", 0, 0
 local facingUntil, facingGUID, testUntil = 0, nil, 0
@@ -174,11 +174,13 @@ addon:SetScript("OnEvent", function(_, event, ...)
         mDPSUptimeOptions.Initialize(db, function()
             ClearAlertTimers()
             locationAllowed = mDPSUptimeOptions.LocationAllowed()
+            mDPSUptimeMinimap.Refresh()
             pending, pendingSince, facingUntil, facingGUID = "", GetTime(), 0, nil
             if not unlocked and GetTime() >= testUntil then text:SetText("") end
         end)
         locationAllowed = mDPSUptimeOptions.LocationAllowed()
         Apply()
+        mDPSUptimeMinimap.Initialize(db)
     elseif event == "PLAYER_LOGIN" then
         -- v1.1.3 native event filter, extended to include range errors.
         -- Keep our independent UI_ERROR_MESSAGE listener for addon warnings.
@@ -254,6 +256,10 @@ SlashCmdList.MDPSUPTIME = function(input)
     local cmd, value = input:lower():match("^(%S*)%s*(.-)$")
     if cmd == "" or cmd == "config" then
         mDPSUptimeOptions.Open()
+    elseif cmd == "minimap" then
+        db.showMinimap = not db.showMinimap
+        mDPSUptimeMinimap.Refresh()
+        Print(db.showMinimap and "Minimap button shown." or "Minimap button hidden.")
     elseif cmd == "test" then
         testUntil = GetTime() + 10
     elseif cmd == "unlock" or cmd == "lock" then
@@ -287,7 +293,7 @@ SlashCmdList.MDPSUPTIME = function(input)
         mDPSUptimeOptions.Reset()
         Apply(); Print("Settings reset.")
     else
-        Print("/mdps config | test | unlock | lock | size 36 | delay 0.6 | sound | target | on | off | reset")
+        Print("/mdps config | minimap | test | unlock | lock | size 36 | delay 0.6 | sound | target | on | off | reset")
     end
 end
 
